@@ -1,45 +1,95 @@
-import socket
-import os
-def viewpage(path):
-    if (path == '/main.html'): 
-            header = 'HTTP/1.1 200 OK\n' + 'Content-Type: text/html \n\n'
-            response="<!DOCTYPE html><html><head><link rel='stylesheet' href='css.css'><title>ENCS3320-Simple Webserver</title><meta name='viewport' content='width=device-width, initial-scale=1'><link rel='stylesheet' href='https://www.w3schools.com/w3css/4/w3.css'><body><div class='w3-container w3-teal'><h1>Welcome to <span style='color:white'> Computer Networks</h1></div><style type=text/css>.up{float: left;}.middlediv{float: left;}.down{float: left;}div{padding : 1%;font-style: Arial;background-color:#B7D5C7;width: 100%;border: solid black;}</style></head><body><div class='up'><h1>Amal Ziad</h1><p><center>Amal is a 3rd year student, majoring computer</p><p>engineering at Birzeit University.The ID number</p><p>is 1192141. She has skills in graphic design and</p><p>art. Projects that she had done are security, python,</p><p>java, in different courses.</p><h2><right><img src='amal.jpg' alt='amal' style='width:30%'></h2></div><div class='middlediv'><h1>Sereen AbuZayed</h1><p><center>Sereen is a 3rd student, majoring computer science</p><p>and minor business administration at Birzeit </p><p>University. The ID number is 1193073. She has skills</p><p>in c programming and volunteering in diiferent ways.</p><p>Projects that she had done are data strucure, data </p><p>base, c programming, in different courses.</p><h2></h2><img src='sereen.jpg' alt='sereen' style='width:30%'></div><div class='rightdiv'><h1>Malak Taha</h1><p><center>Malak is a 3rd student, majoring computer science</p><p>at Birzeit University. The ID number is 1190679. </p><p>She has skills in java programming and in algorithms. </p><p>Projects that she had done are data strucure, data </p><p>base, java programming, in different courses.</p><h2></h2><img src='malak.jpg' alt='malak' style='width:30%'></div><div><p>Port Number:6000</p><p>IP Address:192.168.176.73</p></body></html>"
+from datetime import date
+from socket import * 
 
-    elif (path == '/2'):
-        file = open('view1.html', 'rb')
-        response = file.read()
-        file.close()
-        header = 'HTTP/1.1 200 OK\n' + 'Content-Type: text/html \n\n'
-    elif (path == '/3'):
-        file = open('img.jpg', 'rb')
-        response = file.read()
-        file.close()
-        header = 'HTTP/1.1 200 OK\n' + 'Content-Type: image/jpg \n\n'
-    else:
-        header = 'HTTP/1.1 404 Not Found\n\n'
-        response ="<html><head><title>Error</title><body><p><span style='color:red'>The file is not found</p><p><b>Amal-1192141</p><p>Sereen-1193073</p><p>Malak-1190679</b></p><p>IP Address:192.168.176.73</p><p>Port Number:6500</p></body></html>"
-        connection.send(header.encode() + response)
-        connection.close()
-def get_path(request):
-    try:
-        l= request.split(' ')
-        return l[1]
-    except :
-        return "error"
-HOST= '172.19.44.217'
-PORT= 6500
-ServerSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-ServerSocket.bind((HOST, PORT))
-ServerSocket.listen(1)
-print('webserver serving on port: ', PORT)
+serverPort = 6000
+serverSocket = socket(AF_INET, SOCK_STREAM)
+# Bind the socket to server address and server port
+serverSocket.bind(('', serverPort))
+# Listen to at most 1 connection at a time
+serverSocket.listen(1)
+print("The server is ready to receive")
+# Server should be up and running and listening to the incoming connections
+flage=1#check if page end with html is it main page
 while True:
-    connection, address = ServerSocket.accept()
-    ip, port = ServerSocket.getsockname()
-#decode as 8 bit characters
-    request = connection.recv(1024).decode()
-    print("------------------------------------------------------------------")
-    print(request)
-    print("------------------------------------------------------------------")
-    #get the path
-    path = get_path(request)
-    viewpage(path)
+ # Set up a new connection from the client
+     connectionSocket, addr = serverSocket.accept()
+     sentence = connectionSocket.recv(1024).decode()
+     print(addr)# print the address
+     print(sentence)
+     ip = addr[0]
+     port = addr[1]
+     request = sentence.split()[1]
+     m=sentence.split()[1]
+     m2=m.split('.')[0]
+     myF=m2.split('/')[1]# get the file name
+     print("***")
+     print("The Request")
+     print(request)
+     print("***")
+ # to get index without HTTP
+     if request== "/index.html" or request== "/":# if the request was index.html or empty it will return the main.html file
+         flage = 0# if the request done make the flage false
+         connectionSocket.send("HTTP/1.1 200 OK\r\n".encode())
+         connectionSocket.send("Content-Type: text/html \r\n".encode())
+         connectionSocket.send("\r\n".encode())
+         filex = open("main.html", "rb")
+         connectionSocket.send(filex.read())
+         connectionSocket.close()
+     elif request.endswith('.html') :# if the request was end with .html return html file
+         if (flage==0):# if we entered the previous request continue from the next if statment
+             continue
+         elif(flage==1):
+             connectionSocket.send("HTTP/1.1 200 OK\r\n".encode())
+             connectionSocket.send("Content-Type: text/html\r\n".encode())
+             connectionSocket.send("\r\n".encode())
+             filex = open(myF+".html", "rb")
+             connectionSocket.send(filex.read())
+             connectionSocket.close()
+     elif request.endswith('.png'):
+ # Send one HTTP header line into socket
+         connectionSocket.send("HTTP/1.1 200 OK\r\n".encode())
+         connectionSocket.send("Content-Type: image/png \r\n".encode())
+         connectionSocket.send("\r\n".encode())
+         s = open(myF+".png", "rb")
+ # Close the client connection socket
+         connectionSocket.send(s.read())
+         connectionSocket.close()
+     elif request.endswith('.jpg'):
+ # Send one HTTP header line into socket
+         connectionSocket.send("HTTP/1.1 200 OK\r\n".encode())
+         connectionSocket.send("Content-Type: image/jpeg\r\n".encode())
+         connectionSocket.send("\r\n".encode())
+         s = open(myF+".jpeg", "rb")
+ # Close the client connection socket
+         connectionSocket.send(s.read())
+         connectionSocket.close()
+     elif request.endswith('.css'):
+ # Send one HTTP header line into socket
+         connectionSocket.send("HTTP/1.1 200 OK\r\n".encode())
+         connectionSocket.send("Content-Type: text/css \r\n".encode())
+         connectionSocket.send("\r\n".encode())
+         s = open(myF + ".css", "rb")
+ # Close the client connection socket
+         connectionSocket.send(s.read())
+         connectionSocket.close()
+     elif request.endswith('SortByName'):
+         connectionSocket.send("HTTP/1.1 200 OK\r\n".encode())
+         connectionSocket.send("Content-Type: text/html \r\n".encode())
+         connectionSocket.send("\r\n".encode())
+         my_file = open("SortedByName.html", "r")# read the file with sorted data
+         connectionSocket.send(html.encode())
+         connectionSocket.close()
+     elif request.endswith('SortByPrice'):
+         connectionSocket.send("HTTP/1.1 200 OK\r\n".encode())
+         connectionSocket.send("Content-Type: text/html \r\n".encode())
+         connectionSocket.send("\r\n".encode())
+         my_file = open("SortByPrice", "r")
+         connectionSocket.send(html.encode())
+         connectionSocket.close()
+     else:# if the request didn't end with any of the previous option display an error
+         connectionSocket.send("HTTP/1.1 404 Not Found\r\n".encode())
+         connectionSocket.send("Content-Type: text/html")
+         connectionSocket.send("\r\n".encode())
+         my_file = open("error.html", "r")
+         connectionSocket.send(s.encode())
+         connectionSocket.close()
